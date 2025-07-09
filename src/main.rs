@@ -1,15 +1,17 @@
 use leptos::mount::mount_to_body;
 use leptos::prelude::*;
 use leptos::logging::log;
+use leptos_use::use_interval_fn;
+use web_sys::window;
 
-const ROWS: i32 = 3;
-const COLS: i32 = 3;
+const ROWS: i32 = 50;
+const COLS: i32 = 50;
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq, Copy)]
 struct Cell {
     row: i32,
     col: i32,
-    is_alive: bool, //reactif here
+    is_alive: bool,
     nb_voisin_vivants: i32
 }
 
@@ -20,7 +22,7 @@ fn initialize_grid() -> Vec<Vec<Cell>> {
             Cell {
                 row: i,
                 col: j,
-                is_alive: false, //reactif here
+                is_alive: fastrand::bool(),
                 nb_voisin_vivants: 0
             }
         }
@@ -30,70 +32,99 @@ fn initialize_grid() -> Vec<Vec<Cell>> {
 
 // algo
 // get cells vivante
-// pour chaque cell look voisin si vivant = count+1
-//for chaque cells if voisin_viant > x -> dead ou alive au choix
+// pour chaque cell alive  get voisin et  nb_voisin_vivants = count+1
+// for chaque cells if voisin_viant > x -> dead ou alive au choix
 
-fn get_voisins_cell(row: i32, col: i32, grid: ReadSignal<Vec<Vec<Cell>>>) -> Vec<Cell> {
-    let mut voisins: Vec<Cell> = Vec::new();
-
+fn get_neighbor_cell(row: i32, col: i32, grid: &Vec<Vec<Cell>>) -> Vec<Cell> {
+    let mut neighbors: Vec<Cell> = Vec::new();
     // Traitement de la ligne précédente
     if row - 1 >= 0 {
         if col - 1 >= 0 {
-            voisins.push(grid.get()[(row-1) as usize ][(col-1) as usize]);
+            neighbors.push(grid[(row-1) as usize ][(col-1) as usize]);
         }
         if col + 1 < COLS {
-            voisins.push(grid.get()[(row-1) as usize ][(col+1) as usize]);
+            neighbors.push(grid[(row-1) as usize ][(col+1) as usize]);
         }
-        voisins.push(grid.get()[(row-1) as usize ][(col) as usize]);
+        neighbors.push(grid[(row-1) as usize ][(col) as usize]);
     }
     // Traitement de la ligne en cours
     if col - 1 >= 0 {
-        voisins.push(grid.get()[(row) as usize ][(col-1) as usize]);
+        neighbors.push(grid[(row) as usize ][(col-1) as usize]);
     }
     if col + 1 < COLS {
-        voisins.push(grid.get()[(row) as usize ][(col+1) as usize]);
+        neighbors.push(grid[(row) as usize ][(col+1) as usize]);
     }
     // Traitement de la ligne suivante
     if row + 1 < ROWS {
         if col - 1 >= 0 {
-            voisins.push(grid.get()[(row+1) as usize ][(col-1) as usize]);
+            neighbors.push(grid[(row+1) as usize ][(col-1) as usize]);
         }
         if col + 1 < COLS{
-            voisins.push(grid.get()[(row+1) as usize ][(col+1) as usize]);
+            neighbors.push(grid[(row+1) as usize ][(col+1) as usize]);
         }
-        voisins.push(grid.get()[(row+1) as usize ][(col) as usize]);
+        neighbors.push(grid[(row+1) as usize ][(col) as usize]);
     }
-    return voisins;
+    return neighbors;
 }
 
+fn set_up_cells_alive(current_grid: Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
+
+    current_grid.into_iter()
+    .map(|row| {
+        row.into_iter()
+        .map(|cell| {
+            let new_is_alive = if cell.is_alive && (cell.nb_voisin_vivants == 2 || cell.nb_voisin_vivants == 3) {
+                true
+            } else if !cell.is_alive && cell.nb_voisin_vivants == 3 {
+                true
+            } else {
+                false
+            };
+            Cell {
+                is_alive: new_is_alive,
+                nb_voisin_vivants: 0,
+                ..cell
+            }
+        }).collect()
+    }).collect()
+}
 
 #[component]
 pub fn App() -> impl IntoView {
     let (grid, set_grid) = signal(initialize_grid());
+    let (is_playing, set_is_playing) = signal(false);
+    let (interval, _set_interval) = signal(500_u64);
 
     let next_step = move || {
-        let current_grid = grid.get();
+        let now = window().unwrap().performance().unwrap().now();
+
+        let mut current_grid = grid.get();
     
-        let cells_alive: Vec<Cell> = current_grid.into_iter()
+        let cells_alive: Vec<Cell> = current_grid.clone().into_iter()
         .flat_map(|row| row.into_iter())
         .filter(|cell| cell.is_alive).collect();
 
         for cell in cells_alive  {
-            let voisins_cell = get_voisins_cell(cell.row, cell.col, grid);
+            let voisins_cell = get_neighbor_cell(cell.row, cell.col, &current_grid);
 
             for voisin in voisins_cell {
-                set_grid.update(|grid| {
-                    grid[voisin.row as usize][voisin.col as usize].nb_voisin_vivants +=1;
-                });
-
+                current_grid[voisin.row as usize][voisin.col as usize].nb_voisin_vivants +=1;
             }
         }
-
-        // let ns = grid.get();
-        // log!("{:?}", ns);
-
-
+        let new_grid = set_up_cells_alive(current_grid);
+        set_grid.set(new_grid);
+        let end = window().unwrap().performance().unwrap().now();
+        log!("time: {:.2}ms", end - now);
     };
+
+    use_interval_fn(
+        move || {
+            if is_playing.get() {
+                next_step();
+            }
+        },
+        interval.get_untracked()
+    );
     
     view! {
         <div>
@@ -102,6 +133,21 @@ pub fn App() -> impl IntoView {
             >
                 "Next Step"
             </button>
+            <button
+                on:click=move |_| *set_is_playing.write() = true
+            >
+                "Play"
+            </button>
+            <button
+                on:click=move |_| *set_is_playing.write() = false
+            >
+                "pause"
+            </button>
+            // <button
+            //     on:click=move |_| stop()
+            // >
+            //     "stop"
+            // </button>
 
             <table>
                 <For
