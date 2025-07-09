@@ -1,0 +1,10 @@
+[package]
+name = "game-life"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+console_error_panic_hook = "0.1.7"
+fastrand = "2.3.0"
+leptos = { version = "0.8.2", features = ["csr"] }
+#rand = "0.9.1"
