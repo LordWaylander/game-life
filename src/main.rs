@@ -4,8 +4,9 @@ use leptos::logging::log;
 use leptos_use::use_interval_fn;
 use web_sys::window;
 
-const ROWS: i32 = 50;
+const ROWS: i32 = 40;
 const COLS: i32 = 50;
+const INTERVAL: u64 = 20;
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq, Copy)]
 struct Cell {
@@ -25,15 +26,9 @@ fn initialize_grid() -> Vec<Vec<Cell>> {
                 is_alive: fastrand::bool(),
                 nb_voisin_vivants: 0
             }
-        }
-).collect()
+        }).collect()
     ).collect()
 }
-
-// algo
-// get cells vivante
-// pour chaque cell alive  get voisin et  nb_voisin_vivants = count+1
-// for chaque cells if voisin_viant > x -> dead ou alive au choix
 
 fn get_neighbor_cell(row: i32, col: i32, grid: &Vec<Vec<Cell>>) -> Vec<Cell> {
     let mut neighbors: Vec<Cell> = Vec::new();
@@ -89,38 +84,38 @@ fn set_up_cells_alive(current_grid: Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
     }).collect()
 }
 
+fn next_step(grid: ReadSignal<Vec<Vec<Cell>>>, set_grid: WriteSignal<Vec<Vec<Cell>>>) {
+    let now = window().unwrap().performance().unwrap().now();
+
+    let mut current_grid = grid.get();
+
+    let cells_alive: Vec<Cell> = current_grid.clone().into_iter()
+    .flat_map(|row| row.into_iter())
+    .filter(|cell| cell.is_alive).collect();
+
+    for cell in cells_alive  {
+        let voisins_cell = get_neighbor_cell(cell.row, cell.col, &current_grid);
+
+        for voisin in voisins_cell {
+            current_grid[voisin.row as usize][voisin.col as usize].nb_voisin_vivants +=1;
+        }
+    }
+    let new_grid = set_up_cells_alive(current_grid);
+    set_grid.set(new_grid);
+    let end = window().unwrap().performance().unwrap().now();
+    log!("time: {:.2}ms", end - now);
+}
+
 #[component]
 pub fn App() -> impl IntoView {
     let (grid, set_grid) = signal(initialize_grid());
     let (is_playing, set_is_playing) = signal(false);
-    let (interval, _set_interval) = signal(500_u64);
-
-    let next_step = move || {
-        let now = window().unwrap().performance().unwrap().now();
-
-        let mut current_grid = grid.get();
-    
-        let cells_alive: Vec<Cell> = current_grid.clone().into_iter()
-        .flat_map(|row| row.into_iter())
-        .filter(|cell| cell.is_alive).collect();
-
-        for cell in cells_alive  {
-            let voisins_cell = get_neighbor_cell(cell.row, cell.col, &current_grid);
-
-            for voisin in voisins_cell {
-                current_grid[voisin.row as usize][voisin.col as usize].nb_voisin_vivants +=1;
-            }
-        }
-        let new_grid = set_up_cells_alive(current_grid);
-        set_grid.set(new_grid);
-        let end = window().unwrap().performance().unwrap().now();
-        log!("time: {:.2}ms", end - now);
-    };
+    let (interval, _set_interval) = signal(INTERVAL);
 
     use_interval_fn(
         move || {
             if is_playing.get() {
-                next_step();
+                next_step(grid, set_grid);
             }
         },
         interval.get_untracked()
@@ -128,27 +123,28 @@ pub fn App() -> impl IntoView {
     
     view! {
         <div>
-            <button
-                on:click=move |_| next_step()
-            >
-                "Next Step"
-            </button>
-            <button
-                on:click=move |_| *set_is_playing.write() = true
-            >
-                "Play"
-            </button>
-            <button
-                on:click=move |_| *set_is_playing.write() = false
-            >
-                "pause"
-            </button>
-            // <button
-            //     on:click=move |_| stop()
-            // >
-            //     "stop"
-            // </button>
-
+            <div>
+                <button
+                    on:click=move |_| next_step(grid, set_grid)
+                >
+                    "Next Step"
+                </button>
+                <button
+                    on:click=move |_| *set_is_playing.write() = true
+                >
+                    "Play"
+                </button>
+                <button
+                    on:click=move |_| *set_is_playing.write() = false
+                >
+                    "pause"
+                </button>
+                // <button
+                //     on:click=move |_| stop()
+                // >
+                //     "stop"
+                // </button>
+            </div>
             <table>
                 <For
                     each=|| (0..ROWS).enumerate()
@@ -183,7 +179,6 @@ pub fn App() -> impl IntoView {
         </div>
     }
 }
-
 
 fn main() {
     mount_to_body(App);
