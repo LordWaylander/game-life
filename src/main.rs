@@ -33,10 +33,8 @@ fn initialize_grid() -> Vec<Vec<Cell>> {
 // pour chaque cell look voisin si vivant = count+1
 //for chaque cells if voisin_viant > x -> dead ou alive au choix
 
-fn get_voisins_vivants_cell(row: i32, col: i32, grid: ReadSignal<Vec<Vec<Cell>>>) -> Vec<Cell> {
+fn get_voisins_cell(row: i32, col: i32, grid: ReadSignal<Vec<Vec<Cell>>>) -> Vec<Cell> {
     let mut voisins: Vec<Cell> = Vec::new();
-
-    //grid.get()[(row-1) as usize ][(col+1) as usize ]
 
     // Traitement de la ligne précédente
     if row - 1 >= 0 {
@@ -81,14 +79,20 @@ pub fn App() -> impl IntoView {
         .filter(|cell| cell.is_alive).collect();
 
         for cell in cells_alive  {
-            //log!("{:?}", cell);
-            let voisins_cell = get_voisins_vivants_cell(cell.row, cell.col, grid);
-            //log!("{:?}", voisins_cell);
+            let voisins_cell = get_voisins_cell(cell.row, cell.col, grid);
 
             for voisin in voisins_cell {
+                set_grid.update(|grid| {
+                    grid[voisin.row as usize][voisin.col as usize].nb_voisin_vivants +=1;
+                });
 
             }
         }
+
+        // let ns = grid.get();
+        // log!("{:?}", ns);
+
+
     };
     
     view! {
