@@ -2,7 +2,6 @@ use leptos::mount::mount_to_body;
 use leptos::prelude::*;
 use leptos::logging::log;
 use leptos_use::use_interval_fn;
-use web_sys::console::log;
 use web_sys::window;
 
 mod components;
