@@ -8,8 +8,8 @@ use web_sys::window;
 mod components;
 use components::nav::Nav;
 
-const ROWS: i32 = 50;
-const COLS: i32 = 50;
+const ROWS: i32 = 55;
+const COLS: i32 = 55;
 const INTERVAL: u64 = 300;
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq, Copy)]
@@ -89,8 +89,6 @@ fn set_up_cells_alive(current_grid: Vec<Vec<Cell>>) -> Vec<Vec<Cell>> {
 }
 
 fn next_step(grid: ReadSignal<Vec<Vec<Cell>>>, set_grid: WriteSignal<Vec<Vec<Cell>>>) {
-    let now = window().unwrap().performance().unwrap().now();
-
     let mut current_grid = grid.get();
 
     let cells_alive: Vec<Cell> = current_grid.clone().into_iter()
@@ -106,8 +104,6 @@ fn next_step(grid: ReadSignal<Vec<Vec<Cell>>>, set_grid: WriteSignal<Vec<Vec<Cel
     }
     let new_grid = set_up_cells_alive(current_grid);
     set_grid.set(new_grid);
-    let end = window().unwrap().performance().unwrap().now();
-    log!("time: {:.2}ms", end - now);
 }
 
 #[component]
@@ -115,8 +111,6 @@ pub fn App() -> impl IntoView {
     let (grid, set_grid) = signal(initialize_grid());
     let (is_playing, set_is_playing) = signal(false);
     let (interval, set_interval) = signal(INTERVAL);
-
-
     //use leptos_use::utils::Pausable;
 
     Effect::new(move |_| {
@@ -124,7 +118,10 @@ pub fn App() -> impl IntoView {
         use_interval_fn(
             move || {
                 if is_playing.get() {
+                    let now = window().unwrap().performance().unwrap().now();
                     next_step(grid, set_grid);
+                    let end = window().unwrap().performance().unwrap().now();
+                    log!("time: {:.2}ms", end - now);
                 }
             },
             interval.get()
@@ -149,7 +146,7 @@ pub fn App() -> impl IntoView {
                     key=|(i, _)| i.clone()
                     let((i, _))
                 >
-                    <tr>
+                    <tr> 
                         <For
                         each=move || (0..COLS).enumerate()
                         key=|(j, _)| j.clone()
@@ -157,18 +154,20 @@ pub fn App() -> impl IntoView {
                         >
                         {
                             let is_alive = move || grid.get()[i][j].is_alive;
+                            let display = if i >= 0 && i < 5 { "not_display" } else {""};
                             view! {
                                 <td
                                     class:isAlive=is_alive
+                                    class=display
                                     on:click=move |_| {
                                         set_grid.update(|grid| {
                                             grid[i][j].is_alive = !grid[i][j].is_alive;
                                         });
                                     }
                                 >
-                                    //{move || if is_alive() { "●" } else { "○" } }
                                 </td>
                             }
+                            
                         }
                         </For>
                     </tr>
@@ -181,3 +180,6 @@ pub fn App() -> impl IntoView {
 fn main() {
     mount_to_body(App);
 }
+
+
+

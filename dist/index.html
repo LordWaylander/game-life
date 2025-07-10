@@ -9,25 +9,44 @@
             background-color: blueviolet;
         }
         table {
-            border: 1px solid black;
             border-collapse: collapse;
             margin: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
         }
         table td {
             border: 1px solid black;
             border-collapse: collapse;
             background-color: white;
-            width: 1em;
-            height: 1em;
+            width: 0.5em;
+            height: 0.5em;
+        }
+        .nav {
+            display: flex;
+            flex-direction: column;
+            width: max-content;
+            position: absolute;
+        }
+        .nav .button_menu {
+            display: flex;
+            width: max-content;
+            flex-direction: column;
+        }
+        .not_display {
+            display: none;
         }
     </style>
-<link rel="modulepreload" href="/game-life-8715c05db7f0b345.js" crossorigin="anonymous" integrity="sha384-mL6WA2WzgtnHmYKmmeovfLS6PU6p8TCm0vHumMrXoYm1E4E8CgRmvh1zytzFzBtb"><link rel="preload" href="/game-life-8715c05db7f0b345_bg.wasm" crossorigin="anonymous" integrity="sha384-IdFEfxFAlbbDPo/FREI8FGt4OtP89Qoo7wijDqiytu3rIpHKVmtxFfhDjj+0bheG" as="fetch" type="application/wasm"></head>
+<link rel="modulepreload" href="/game-life-f093ed53dd704cfc.js" crossorigin="anonymous" integrity="sha384-RO0Cxh7KG93qsy+Db3auXuGngTUNuQg4oNkbmDEy7dxkU0CrZ4ApKbtsJAR5tlpA"><link rel="preload" href="/game-life-f093ed53dd704cfc_bg.wasm" crossorigin="anonymous" integrity="sha384-3mbG9hHSoaLjQf4Wj5npsSzt+m5v587zg8bozpWqv7MEMaeVThNHrUSoKGLtzXI6" as="fetch" type="application/wasm"></head>
 <body>
     
 
 <script type="module">
-import init, * as bindings from '/game-life-8715c05db7f0b345.js';
-const wasm = await init({ module_or_path: '/game-life-8715c05db7f0b345_bg.wasm' });
+import init, * as bindings from '/game-life-f093ed53dd704cfc.js';
+const wasm = await init({ module_or_path: '/game-life-f093ed53dd704cfc_bg.wasm' });
 
 
 window.wasmBindings = bindings;

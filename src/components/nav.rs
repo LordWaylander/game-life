@@ -13,7 +13,8 @@ pub fn Nav(
     
 
     view! {
-        <div>
+        <div class="nav">
+        <div class="button_menu">
             <button
                 on:click=move |_| next_step(grid.0, grid.1)
             >
@@ -46,7 +47,7 @@ pub fn Nav(
                 "Reset"
             </button>
         </div>
-        <div>
+        <div class="button_speed">
             <button
             on:click=move |_| {
                 interval.1.set(INTERVAL);
@@ -56,10 +57,7 @@ pub fn Nav(
             </button>
             <button
             on:click=move |_| {
-                log!("x2");
-                log!("{:?}", interval.0.get());
                 interval.1.set(INTERVAL/2);
-                log!("{:?}", interval.0.get());
             }
             >
                 "x2" // 75x2
@@ -71,6 +69,7 @@ pub fn Nav(
             >
                 "x3" // 75x3
             </button>
+        </div>
         </div>
     }
 }

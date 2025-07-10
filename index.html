@@ -9,16 +9,35 @@
             background-color: blueviolet;
         }
         table {
-            border: 1px solid black;
             border-collapse: collapse;
             margin: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
         }
         table td {
             border: 1px solid black;
             border-collapse: collapse;
             background-color: white;
-            width: 1em;
-            height: 1em;
+            width: 0.5em;
+            height: 0.5em;
+        }
+        .nav {
+            display: flex;
+            flex-direction: column;
+            width: max-content;
+            position: absolute;
+        }
+        .nav .button_menu {
+            display: flex;
+            width: max-content;
+            flex-direction: column;
+        }
+        .not_display {
+            display: none;
         }
     </style>
 </head>
