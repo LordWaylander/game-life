@@ -2,11 +2,15 @@ use leptos::mount::mount_to_body;
 use leptos::prelude::*;
 use leptos::logging::log;
 use leptos_use::use_interval_fn;
+use web_sys::console::log;
 use web_sys::window;
 
-const ROWS: i32 = 40;
+mod components;
+use components::nav::Nav;
+
+const ROWS: i32 = 50;
 const COLS: i32 = 50;
-const INTERVAL: u64 = 20;
+const INTERVAL: u64 = 300;
 
 #[derive(Debug, Clone, Eq, Hash, PartialEq, Copy)]
 struct Cell {
@@ -110,41 +114,35 @@ fn next_step(grid: ReadSignal<Vec<Vec<Cell>>>, set_grid: WriteSignal<Vec<Vec<Cel
 pub fn App() -> impl IntoView {
     let (grid, set_grid) = signal(initialize_grid());
     let (is_playing, set_is_playing) = signal(false);
-    let (interval, _set_interval) = signal(INTERVAL);
+    let (interval, set_interval) = signal(INTERVAL);
 
-    use_interval_fn(
-        move || {
-            if is_playing.get() {
-                next_step(grid, set_grid);
-            }
-        },
-        interval.get_untracked()
-    );
+
+    //use leptos_use::utils::Pausable;
+
+    Effect::new(move |_| {
+        //let Pausable { pause, resume, is_active } = use_interval_fn(
+        use_interval_fn(
+            move || {
+                if is_playing.get() {
+                    next_step(grid, set_grid);
+                }
+            },
+            interval.get()
+        );
+        
+        // move || {
+        //     log!("*{:?}", interval.get());
+        //     pause();
+        // }
+    });
     
     view! {
         <div>
-            <div>
-                <button
-                    on:click=move |_| next_step(grid, set_grid)
-                >
-                    "Next Step"
-                </button>
-                <button
-                    on:click=move |_| *set_is_playing.write() = true
-                >
-                    "Play"
-                </button>
-                <button
-                    on:click=move |_| *set_is_playing.write() = false
-                >
-                    "pause"
-                </button>
-                // <button
-                //     on:click=move |_| stop()
-                // >
-                //     "stop"
-                // </button>
-            </div>
+            <Nav 
+                grid=(grid, set_grid) 
+                playing=(is_playing, set_is_playing) 
+                interval=(interval, set_interval)
+            />
             <table>
                 <For
                     each=|| (0..ROWS).enumerate()
